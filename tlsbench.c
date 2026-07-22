@@ -301,10 +301,10 @@ server(struct sockaddr_in *sin, int jobs, char *res, size_t ressize)
 			tls_free(ctx);
 		}
 
-		if (shutdown(c, SHUT_WR) == -1)
+		if (shutdown(c, SHUT_WR) == -1 && errno != ENOTCONN)
 			err(1, "shutdown");
  again:
-		if (read(c, buf, sizeof buf) != 0) {
+		if (read(c, buf, sizeof buf) != 0 && errno != ECONNRESET) {
 			if (errno == EINTR)
 				goto again;
 			err(1, "read");
