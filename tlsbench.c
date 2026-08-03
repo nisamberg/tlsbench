@@ -414,8 +414,12 @@ client(struct sockaddr_in *sin, char *req, size_t reqsize, char *proxy,
 		memset(buf, 0, sizeof buf);
 
 		while ((ret = tls_read(tls, &buf, sizeof buf)) != 0) {
-			if (ret == -1)
+			if (ret == -1) {
+				if (strcmp(tls_error(tls), "read failed: Connection reset by peer") == 0)
+					break;
+
 				err(1, "tls_read: %s", tls_error(tls));
+			}
 			if (ret > 0)
 				errx(1, "tls_read: unexpected data");
 		}
@@ -425,7 +429,7 @@ client(struct sockaddr_in *sin, char *req, size_t reqsize, char *proxy,
 	}
 
  again:
-	if (read(fd, &buf, sizeof buf) != 0) {
+	if (read(fd, &buf, sizeof buf) != 0 && errno != ECONNRESET) {
 		if (errno == EINTR)
 			goto again;
 		err(1, "read");
